@@ -13,7 +13,7 @@ Este laboratório tem como objetivo **aprimorar o conhecimento em WildFly/JBoss 
 > Nota: Este lab é voltado para aprendizado. O NGINX serve apenas para testes de balanceamento externo.
 
 ---
-
+```
 JbossDomain/
 ├── domain-controller/
 │   ├── app/
@@ -44,12 +44,19 @@ JbossDomain/
 ├── nginx/
 │   └── nginx.conf
 └── docker-compose.yml
+```
 
 
 
 ---
 
 ## Configuração
+
+Domain Controller
+└─ host1
+   └─ server-one (main-server-group)
+   └─ host2
+   └─ server-two (main-server-group)
 
 ### Domain Controller
 
@@ -70,6 +77,8 @@ JbossDomain/
   - `host2/config/host2.xml`
 
 ---
+
+
 
 ## Deploy de Aplicações
 
