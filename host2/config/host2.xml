@@ -57,7 +57,7 @@
         </jvm>
     </jvms>
     <servers>
-        <server name="server-one" group="main-server-group"/>
+        <server name="server-two" group="main-server-group"/>
     </servers>
     <profile>
         <subsystem xmlns="urn:jboss:domain:core-management:1.0"/>
