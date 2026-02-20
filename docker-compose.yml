@@ -3,7 +3,13 @@ services:
     build:
       context: ./domain-controller
     container_name: domain-controller
+
+    # Espera o MongoDB, OpenSearch e o próprio Domain Controller estarem prontos antes de iniciar o WildFly
     command: >
+     /opt/wait-for-it.sh graylog:9000 -t 45 --
+     /opt/wait-for-it.sh mongodb:27017 -t 45 --
+     /opt/wait-for-it.sh opensearch:9200 -t 45 --
+     /opt/wait-for-it.sh domain-controller:9999 -t 60 --
      /opt/jboss/wildfly/bin/domain.sh
      --host-config=host-master.xml -b 0.0.0.0
      -bmanagement 0.0.0.0
@@ -16,21 +22,29 @@ services:
     - ./domain-controller/config/host-master.xml:/opt/jboss/wildfly/domain/configuration/host-master.xml:ro
     - ./domain-controller/domain/configuration/mgmt-users.properties:/opt/jboss/wildfly/domain/configuration/mgmt-users.properties
     - ./domain-controller/domain/configuration/mgmt-groups.properties:/opt/jboss/wildfly/domain/configuration/mgmt-groups.properties
-    #- ./domain-controller/config/domain.xml:/opt/jboss/wildfly/domain/configuration/domain.xml:ro
+
+    depends_on:
+      - opensearch
+      - graylog
+      - mongodb
+    
     networks:
      - wildfly-net
 
   host1:
-    image: quay.io/wildfly/wildfly:latest
+    build:
+      context: ./domain-controller
     container_name: host1
+    # Espera o Domain Controller, MongoDB e OpenSearch estarem prontos antes de iniciar o Host Controller
     command: >
+      /opt/wait-for-it.sh domain-controller:9999 -t 15 --
       /opt/jboss/wildfly/bin/domain.sh
       --host-config=host1.xml
       -Djboss.domain.master.address=domain-controller
       -b 0.0.0.0
       -bmanagement 0.0.0.0
     volumes:
-      - ./host1/config/host1.xml:/opt/jboss/wildfly/domain/configuration/host1.xml:ro
+      - ./host1/config/host1.xml:/opt/jboss/wildfly/domain/configuration/host1.xml
       - ./domain-controller/domain/configuration/mgmt-users.properties:/opt/jboss/wildfly/domain/configuration/mgmt-users.properties
       - ./domain-controller/domain/configuration/mgmt-groups.properties:/opt/jboss/wildfly/domain/configuration/mgmt-groups.properties
     environment:
@@ -38,25 +52,36 @@ services:
       
     depends_on:
       - domain-controller
+      - opensearch
+      - graylog
+      - mongodb
+    
     networks:
       - wildfly-net
 
 
   host2:
-    image: quay.io/wildfly/wildfly:latest
+    build:
+      context: ./domain-controller
     container_name: host2
+    # Espera o Domain Controller, MongoDB e OpenSearch estarem prontos antes de iniciar o Host Controller
     command: >
+      /opt/wait-for-it.sh domain-controller:9999 -t 30 --
       /opt/jboss/wildfly/bin/domain.sh
       --host-config=host2.xml
       -Djboss.domain.master.address=domain-controller
       -b 0.0.0.0
       -bmanagement 0.0.0.0
     volumes:
-      - ./host2/config/host2.xml:/opt/jboss/wildfly/domain/configuration/host2.xml:ro
+      - ./host2/config/host2.xml:/opt/jboss/wildfly/domain/configuration/host2.xml
     environment:
       - NODE_NAME=host2
     depends_on:
       - domain-controller
+      - opensearch
+      - graylog
+      - mongodb
+    
     networks:
       - wildfly-net
 
@@ -73,6 +98,66 @@ services:
       - host2      
     networks:
       - wildfly-net
+  
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: opensearch
+    environment:
+      - plugins.security.disabled=true
+      - discovery.type=single-node
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - ./opensearch/data:/usr/share/opensearch/data
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    networks:
+      - wildfly-net
+
+  graylog:
+    image: graylog/graylog:6.2.12-1
+    container_name: graylog
+    environment:
+      - GRAYLOG_PASSWORD_SECRET=soa23e0597b418c6fd
+      - GRAYLOG_ROOT_PASSWORD_SHA2=e86f78a8a3caf0b60d8e74e5942aa6d86dc150cd3c03338aef25b7d2d7e3acc7
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://graylog:9000/
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://opensearch:9200
+      - GRAYLOG_MONGODB_URI=mongodb://mongodb:27017/graylog
+      - TZ=America/Sao_Paulo
+    
+    
+    ports:
+      - "9000:9000"
+      - "12201:12201/udp"
+    depends_on:
+      - opensearch
+      - mongodb
+    networks:
+      - wildfly-net
+  
+  mongodb:
+    image: mongo:noble
+    container_name: mongodb
+    volumes:
+      - ./mongodb/data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - wildfly-net
+  
+ 
 
 networks:
   wildfly-net:

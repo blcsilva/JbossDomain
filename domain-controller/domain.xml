@@ -951,7 +951,7 @@
                 <custom-handler name="GelfLogger" class="biz.paluch.logging.gelf.wildfly.WildFlyGelfLogHandler" module="biz.paluch.logging">
                     <level name="INFO" />
                     <properties>
-                        <property name="host" value="udp:localhost" />
+                        <property name="host" value="udp:graylog" />
                         <property name="port" value="12201" />
                         <property name="version" value="1.1" />
                         <property name="facility" value="java-test" />
@@ -969,7 +969,7 @@
                         <!-- This are fields using MDC -->
                         <property name="mdcFields" value="mdcField1,mdcField2" />
                         <property name="dynamicMdcFields" value="mdc.*,(mdc|MDC)fields" />
-                        <property name="dynamicMdcFieldTypes" value="my_field.*=String,business\..*\.field=double" />
+                        
                         <property name="includeFullMdc" value="true" />
                     </properties>
                 </custom-handler>
@@ -977,7 +977,6 @@
                     <level name="INFO"/>
                     <handlers>
                         <handler name="FILE"/>
-                        <handler name="CONSOLE"/>
                         <handler name="GelfLogger"/>
                     </handlers>
                 </root-logger>
