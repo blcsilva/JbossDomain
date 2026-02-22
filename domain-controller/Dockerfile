@@ -1,10 +1,14 @@
-<<<<<<< HEAD
 FROM quay.io/wildfly/wildfly:latest
 
 USER root
 
+COPY ./skywalking-agent/ /opt/skywalking-agent/
+RUN mkdir -p /opt/skywalking-agent/logs && \
+    chmod 775 /opt/skywalking-agent/logs
+
 # Criação do diretório do módulo GELF no caminho correto
 RUN mkdir -p /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main
+
 
 # Copia os JARs necessários para o módulo
 COPY logstash-gelf-1.15.1.jar \
@@ -27,6 +31,9 @@ COPY domain.xml \
 # Script auxiliar de espera
 COPY wait-for-it.sh /opt/wait-for-it.sh
 
+
+
+
 # Criação de usuários administrativos e de domínio
 RUN /opt/jboss/wildfly/bin/add-user.sh admin Admin#123 --silent
 RUN /opt/jboss/wildfly/bin/add-user.sh jboss Jboss@123 --silent
@@ -34,17 +41,7 @@ RUN /opt/jboss/wildfly/bin/add-user.sh jboss Jboss@123 --silent
 # Permissões para o script
 RUN chmod +x /opt/wait-for-it.sh
 
-USER jboss
-=======
-FROM quay.io/wildfly/wildfly:latest
+
 
 USER root
 
-# Admin do console (opcional)
-RUN /opt/jboss/wildfly/bin/add-user.sh admin Admin#123 --silent
-
-# User usado pelo Host Controller para conectar no Domain Controller
-RUN /opt/jboss/wildfly/bin/add-user.sh jboss Jboss@123 --silent
-
-USER jboss
->>>>>>> 8b5d76762fa12e297e1badeb24e5b0c522120d2f

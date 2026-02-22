@@ -962,7 +962,13 @@
                         <property name="maximumMessageSize" value="8192" />
                         
                         <!-- This are static fields -->
-                        <property name="additionalFields" value="fieldName1=fieldValue1,fieldName2=fieldValue2" />
+                        <property name="additionalFields" 
+                                  value="jboss.node.name=${jboss.node.name},
+                                         jboss.server.name=${jboss.server.name},
+                                         jboss.qualified.host.name=${jboss.qualified.host.name},
+                                         jboss.home.dir=${jboss.home.dir},
+                                         jboss.domain.master.address=${jboss.domain.master.address}"/>
+
                         <!-- Optional: Specify field types -->
                         <property name="additionalFieldTypes" value="fieldName1=String,fieldName2=Double,fieldName3=Long" />
                         
@@ -2037,6 +2043,10 @@
         <server-group name="main-server-group" profile="full">
             <jvm name="default">
                 <heap size="64m" max-size="512m"/>
+                <jvm-options>
+                 <option value="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"/>
+                 <option value="-javaagent:/opt/skywalking-agent/skywalking-agent.jar"/>
+                </jvm-options>
             </jvm>
             <socket-binding-group ref="full-sockets"/>
         </server-group>

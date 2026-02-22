@@ -61,8 +61,11 @@
         </jvm>
     </jvms>
     <servers>
-        <server name="server-one" group="main-server-group"/>
+        <server name="server-one" group="main-server-group">
+            
+        </server>
     </servers>
+
     <profile>
         <subsystem xmlns="urn:jboss:domain:core-management:1.0"/>
         <subsystem xmlns="urn:wildfly:elytron:community:18.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto" register-jaspi-factory="false">

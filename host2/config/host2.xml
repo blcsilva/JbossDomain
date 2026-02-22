@@ -60,7 +60,7 @@
         </jvm>
     </jvms>
     <servers>
-        <server name="server-two" group="main-server-group" auto-start="true">
+        <server name="server-two" group="main-server-group" auto-start="false">
             <socket-bindings port-offset="150"/>
         </server>    
     </servers>
