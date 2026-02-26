@@ -2,46 +2,51 @@ FROM quay.io/wildfly/wildfly:latest
 
 USER root
 
-COPY ./skywalking-agent/ /opt/skywalking-agent/
-RUN mkdir -p /opt/skywalking-agent/logs && \
-    chmod 775 /opt/skywalking-agent/logs
+# ==============================
+# JOLOKIA AGENT
+# ==============================
+RUN mkdir -p /opt/jolokia
 
-# Criação do diretório do módulo GELF no caminho correto
+COPY jolokia-2.5.1/agents/jolokia-agent-jvm-javaagent.jar \
+     /opt/jolokia/jolokia-agent.jar
+
+RUN chmod 644 /opt/jolokia/jolokia-agent.jar
+
+# ==============================
+# GELF MODULE
+# ==============================
 RUN mkdir -p /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main
 
-
-# Copia os JARs necessários para o módulo
 COPY logstash-gelf-1.15.1.jar \
+     jedis-2.9.0.jar \
+     commons-pool2-2.4.3.jar \
+     module.xml \
      /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main/
 
-COPY jedis-2.9.0.jar \
-     /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main/
-
-COPY commons-pool2-2.4.3.jar \
-     /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main/
-
-# Copia o module.xml que define o módulo
-COPY module.xml \
-     /opt/jboss/wildfly/modules/system/layers/base/biz/paluch/logging/main/
-
-# Copia o domain.xml com a configuração de logging ajustada
+# ==============================
+# DOMAIN CONFIG
+# ==============================
 COPY domain.xml \
-    /opt/jboss/wildfly/domain/configuration/domain.xml
+     /opt/jboss/wildfly/domain/configuration/domain.xml
 
-# Script auxiliar de espera
+# ==============================
+# WAIT SCRIPT
+# ==============================
 COPY wait-for-it.sh /opt/wait-for-it.sh
-
-
-
-
-# Criação de usuários administrativos e de domínio
-RUN /opt/jboss/wildfly/bin/add-user.sh admin Admin#123 --silent
-RUN /opt/jboss/wildfly/bin/add-user.sh jboss Jboss@123 --silent
-
-# Permissões para o script
 RUN chmod +x /opt/wait-for-it.sh
 
+# ==============================
+# USERS
+# ==============================
+RUN /opt/jboss/wildfly/bin/add-user.sh admin Admin#123 --silent && \
+    /opt/jboss/wildfly/bin/add-user.sh jboss Jboss@123 --silent
 
+# ==============================
+# JAVA OPTS
+# ==============================
+ENV JAVA_OPTS=""
+ENV JAVA_OPTS_APPEND="\
+-javaagent:/opt/jolokia/jolokia-agent.jar=port=8778,host=0.0.0.0 \
+-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 
-USER root
-
+USER jboss
